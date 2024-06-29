@@ -120,7 +120,7 @@ class fieldInt:
 
     def __sub__(self, other):
         if not self.fieldSize == other.fieldSize:
-            return "Error, no se pueden multiplicar enteros de campos diferentes"
+            return "Error, no se pueden restar enteros de campos diferentes"
         negOtherPolynomial = list(map(lambda x: other.primeBase - x, other.polValue))
         negOtherValue = 0
         for i in range(other.primePower):
