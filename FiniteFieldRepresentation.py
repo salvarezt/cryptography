@@ -126,11 +126,24 @@ class fieldInt:
         for i in range(other.primePower):
             negOtherValue += negOtherPolynomial[i] * other.primeBase ** i
         return self + fieldInt(negOtherValue, other.primeBase, other.primePower)
+
+    def __floordiv__(self, other):
+        if not self.fieldSize == other.fieldSize:
+            return "Error, no se pueden restar enteros de campos diferentes"
+        inverseOther = fieldInt(1, other.primeBase, other.primePower)
+        while (inverseOther * other).value != 1:
+            inverseOther = inverseOther * other
+        return self * inverseOther
         
 
 def main():
-    a = fieldInt(20, 2, 3)
-    print(a)
+    a = fieldInt(4, 3, 3)
+    b = fieldInt(5, 3, 3)
+    c = fieldInt(13, 3, 3)
+    x = (a * b) + c
+    y = (x - c) * a # (((a * b) + c) - c) * a = a * b * a
+    z = y // (b * a) # a * b * a // (b * a) = a
+    print(a, b, c, x, y, z)
     
 
 if __name__ == "__main__":
