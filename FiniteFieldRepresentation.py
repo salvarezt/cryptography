@@ -1,4 +1,24 @@
-from primetest import modinv
+def extended_gcd(a, b):
+    r0, r1 = a, b
+    s0, s1 = 1, 0
+    t0, t1 = 0, 1
+    while r1 != 0:
+        q, r = r0 // r1, r0 % r1
+        s = s0 - s1 * q
+        t = t0 - t1 * q
+        s0, t0 = s1, t1
+        s1, t1 = s, t
+        r0 = r1
+        r1 = r
+    return r0, s0, t0
+
+def modinv(a, mod):
+    d, inv, _ = extended_gcd(a, mod)
+    if d != 1:
+        return 0
+    while inv < 0:
+        inv += mod
+    return inv % mod
 
 def polynomialPrimeProduct(a, b, p : int):
     """
@@ -77,7 +97,7 @@ def irreduciblePolynomialFinder(p : int, n : int):
     return candidate
 
 class fieldInt:
-    def __init__(self, value : int, p : int, n : int):
+    def __init__(self, value : int, p : int, n : int, irreduciblePol = None):
         self.value = value % (p ** n)
         self.primeBase = p
         self.primePower = n
@@ -88,10 +108,13 @@ class fieldInt:
             value = value // p
             polinomialValue.append(value % p)
         self.polValue = polinomialValue
-        if n == 1:
-            self.prodPol = [0, 1]
+        if irreduciblePol is not None:
+            self.prodPol = irreduciblePol
         else:
-            self.prodPol = irreduciblePolynomialFinder(p, n)
+            if n == 1:
+                self.prodPol = [0, 1]
+            else:
+                self.prodPol = irreduciblePolynomialFinder(p, n)
 
     def __str__(self):
         t = str(self.value) + " del campo F" + str(self.fieldSize) + '\n'
@@ -99,6 +122,12 @@ class fieldInt:
         t += '\n'
         return t
 
+    def __bool__(self):
+        return bool(self.value)
+    
+    def __int__(self):
+        return self.value
+    
     def __add__(self, other):
         if not self.fieldSize == other.fieldSize:
             return "Error, no se pueden sumar enteros de campos diferentes"
@@ -106,7 +135,7 @@ class fieldInt:
         sumValue = 0
         for i in range(self.primePower):
             sumValue += sumPolynomial[i] * self.primeBase ** i
-        return fieldInt(sumValue, self.primeBase, self.primePower)
+        return fieldInt(sumValue, self.primeBase, self.primePower, self.prodPol)
 
     def __mul__(self, other):
         if not self.fieldSize == other.fieldSize:
@@ -116,16 +145,19 @@ class fieldInt:
         prodValue = 0
         for i in range(self.primePower):
             prodValue += prodPolynomial[i] * self.primeBase ** i
-        return fieldInt(prodValue, self.primeBase, self.primePower)
+        return fieldInt(prodValue, self.primeBase, self.primePower, self.prodPol)
+
+    def __neg__(self):
+        negSelfPolynomial = list(map(lambda x: (self.primeBase - x) % self.primeBase, self.polValue))
+        negSelfValue = 0
+        for i in range(self.primePower):
+            negSelfValue += negSelfPolynomial[i] * self.primeBase ** i
+        return fieldInt(negSelfValue, self.primeBase, self.primePower, self.prodPol)
 
     def __sub__(self, other):
         if not self.fieldSize == other.fieldSize:
             return "Error, no se pueden restar enteros de campos diferentes"
-        negOtherPolynomial = list(map(lambda x: (other.primeBase - x) % other.primeBase, other.polValue))
-        negOtherValue = 0
-        for i in range(other.primePower):
-            negOtherValue += negOtherPolynomial[i] * other.primeBase ** i
-        return self + fieldInt(negOtherValue, other.primeBase, other.primePower)
+        return self + (- other)
 
     def __floordiv__(self, other):
         if not self.fieldSize == other.fieldSize:
@@ -143,7 +175,22 @@ def main():
     x = (a * b) + c
     y = (x - c) * a # (((a * b) + c) - c) * a = a * b * a
     z = y // (b * a) # a * b * a // (b * a) = a
-    print(a, b, c, x, y, z)
+    # print(a, b, c, x, y, z)
+
+    """
+    prime = 11
+    power = 2
+
+    for i in range(prime ** power):
+        v = fieldInt(i, prime, power)
+        prod = fieldInt(1, prime, power)
+        for j in range(prime):
+            prod = prod * v
+        print(v, prod)
+    """
+
+    i = fieldInt(74, 2, 8)
+    print(i)
     
 
 if __name__ == "__main__":
